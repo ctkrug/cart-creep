@@ -589,6 +589,23 @@ p {
   border: 0;
 }
 
+.confirm-panel {
+  margin-bottom: var(--space-4);
+  border-left: 3px solid var(--danger);
+}
+
+.confirm-panel p {
+  margin-bottom: var(--space-2);
+}
+
+.confirm-panel .form-row {
+  align-items: center;
+}
+
+.confirm-panel .field {
+  margin-bottom: 0;
+}
+
 @media (max-width: 390px) {
   .page {
     padding-inline: var(--space-2);

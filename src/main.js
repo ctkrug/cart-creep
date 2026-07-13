@@ -1,4 +1,4 @@
-import { addEntry, addItem, getEntries, getItems, removeItem } from "./store.js";
+import { addEntry, addItem, clearAll, exportData, getEntries, getItems, importData, removeItem } from "./store.js";
 import { attachChartInteractions, renderChartMarkup } from "./chartRender.js";
 import { itemCreepBreakdown } from "./cartIndex.js";
 import { formatCurrency, formatMonth, formatPercent } from "./format.js";
@@ -22,6 +22,9 @@ const state = {
   itemFormDraft: "",
   entryFormError: "",
   entryFormDraft: { item: "", month: currentMonth(), price: "" },
+  dataError: "",
+  pendingImport: null,
+  clearConfirmOpen: false,
 };
 
 function renderItemsPanel(items) {
@@ -195,6 +198,38 @@ function renderBreakdownPanel(entries) {
     </section>`;
 }
 
+function renderDataPanel() {
+  if (state.pendingImport) {
+    return `
+      <div class="receipt-card confirm-panel" role="alertdialog" aria-label="Confirm import">
+        <p><strong>Import "${escapeHtml(state.pendingImport.fileName)}"?</strong>
+           This replaces every item and price currently stored.</p>
+        <div class="masthead-actions">
+          <button type="button" class="btn btn-primary" id="confirm-import-btn">Confirm import</button>
+          <button type="button" class="btn btn-ghost" id="cancel-import-btn">Cancel</button>
+        </div>
+        <p class="field-error" role="alert">${escapeHtml(state.dataError)}</p>
+      </div>`;
+  }
+  if (state.clearConfirmOpen) {
+    return `
+      <div class="receipt-card confirm-panel" role="alertdialog" aria-label="Confirm clear all data">
+        <p><strong>Type CLEAR to erase all items and prices.</strong> This cannot be undone.</p>
+        <div class="form-row">
+          <div class="field">
+            <input class="field-input" id="clear-confirm-input" type="text" autocomplete="off" placeholder="CLEAR" />
+          </div>
+          <button type="button" class="btn btn-danger" id="confirm-clear-btn" disabled>Erase everything</button>
+          <button type="button" class="btn btn-ghost" id="cancel-clear-btn">Cancel</button>
+        </div>
+      </div>`;
+  }
+  if (state.dataError) {
+    return `<p class="field-error" role="alert">${escapeHtml(state.dataError)}</p>`;
+  }
+  return "";
+}
+
 function render() {
   const app = document.getElementById("app");
   const items = getItems();
@@ -207,7 +242,16 @@ function render() {
           <h1 class="wordmark">Cart<span class="wordmark-accent">Creep</span></h1>
           <p class="tagline">Track your own grocery inflation against the official CPI.</p>
         </div>
+        <div class="masthead-actions">
+          <button type="button" class="btn btn-ghost" id="export-btn">Export</button>
+          <label class="btn btn-ghost" for="import-file-input">
+            Import
+            <input type="file" id="import-file-input" accept="application/json" class="visually-hidden" />
+          </label>
+          <button type="button" class="btn btn-ghost btn-danger" id="clear-btn">Clear all data</button>
+        </div>
       </header>
+      ${renderDataPanel()}
       <main class="layout">
         <section class="chart-panel receipt-card">
           <h2>
@@ -233,6 +277,7 @@ function render() {
 
   bindItemForm();
   bindEntryForm();
+  bindDataActions();
   attachChartInteractions(app);
 }
 
@@ -276,6 +321,73 @@ function bindEntryForm() {
       state.entryFormError = error.message;
       state.entryFormDraft = { item, month, price };
     }
+    render();
+  });
+}
+
+function downloadJson(filename, contents) {
+  const blob = new Blob([contents], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function bindDataActions() {
+  document.getElementById("export-btn")?.addEventListener("click", () => {
+    downloadJson("cart-creep-export.json", exportData());
+  });
+
+  document.getElementById("import-file-input")?.addEventListener("change", (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      state.pendingImport = { fileName: file.name, text: String(reader.result) };
+      state.dataError = "";
+      render();
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById("confirm-import-btn")?.addEventListener("click", () => {
+    try {
+      importData(state.pendingImport.text);
+      state.pendingImport = null;
+      state.dataError = "";
+    } catch (error) {
+      state.dataError = error.message;
+    }
+    render();
+  });
+
+  document.getElementById("cancel-import-btn")?.addEventListener("click", () => {
+    state.pendingImport = null;
+    state.dataError = "";
+    render();
+  });
+
+  document.getElementById("clear-btn")?.addEventListener("click", () => {
+    state.clearConfirmOpen = true;
+    state.dataError = "";
+    render();
+  });
+
+  document.getElementById("cancel-clear-btn")?.addEventListener("click", () => {
+    state.clearConfirmOpen = false;
+    render();
+  });
+
+  const clearInput = document.getElementById("clear-confirm-input");
+  const confirmClearBtn = document.getElementById("confirm-clear-btn");
+  clearInput?.addEventListener("input", () => {
+    confirmClearBtn.disabled = clearInput.value.trim() !== "CLEAR";
+  });
+  confirmClearBtn?.addEventListener("click", () => {
+    clearAll();
+    state.clearConfirmOpen = false;
     render();
   });
 }
