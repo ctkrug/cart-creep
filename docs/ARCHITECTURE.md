@@ -70,7 +70,12 @@ no logic that affects stored data.
   every action calls `render()`, which rebuilds `#app`'s innerHTML from
   `store.js` + `state` and re-binds listeners. No virtual DOM — acceptable
   at this scale, and it means "what's on screen" is always a pure function
-  of `store` + `state`.
+  of `store` + `state`. A debounced `window` resize listener also funnels
+  into `render()`, so the chart's canvas-measured viewBox stays correct
+  after the window is resized, not just on the next unrelated action.
+  `render` is exported solely so `main.test.js` can call it directly
+  instead of re-importing the module (and re-registering its listeners)
+  per test.
 
 ## Known behavior worth knowing before changing the math
 
