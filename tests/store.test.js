@@ -1,5 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { addEntry, addItem, clearAll, getEntries, getItems, removeItem } from "../src/store.js";
+import {
+  addEntry,
+  addItem,
+  clearAll,
+  exportData,
+  getEntries,
+  getItems,
+  importData,
+  removeItem,
+} from "../src/store.js";
 
 beforeEach(() => {
   clearAll();
@@ -59,5 +68,62 @@ describe("entries", () => {
     expect(() => addEntry({ item: "Milk", month: "2026-01", price: -1 })).toThrow(
       /non-negative/,
     );
+  });
+});
+
+describe("exportData / importData", () => {
+  it("round-trips items and entries through export then import", () => {
+    addItem("Milk");
+    addEntry({ item: "Milk", month: "2026-01", price: 4.2 });
+    const json = exportData();
+
+    clearAll();
+    expect(getItems()).toEqual([]);
+
+    importData(json);
+    expect(getItems()).toEqual(["Milk"]);
+    expect(getEntries()).toEqual([{ item: "Milk", month: "2026-01", price: 4.2 }]);
+  });
+
+  it("rejects non-JSON input and leaves existing data untouched", () => {
+    addItem("Milk");
+    expect(() => importData("not json")).toThrow(/not valid JSON/);
+    expect(getItems()).toEqual(["Milk"]);
+  });
+
+  it("rejects a payload missing items/entries arrays", () => {
+    addItem("Milk");
+    expect(() => importData(JSON.stringify({ items: [] }))).toThrow(/items.*entries/);
+    expect(getItems()).toEqual(["Milk"]);
+  });
+
+  it("rejects an entry referencing an item not in the payload's own item list", () => {
+    addItem("Milk");
+    const bad = JSON.stringify({ items: ["Eggs"], entries: [{ item: "Milk", month: "2026-01", price: 3 }] });
+    expect(() => importData(bad)).toThrow(/not in its own item list/);
+    expect(getItems()).toEqual(["Milk"]);
+  });
+
+  it("rejects a payload over the 10-item cap", () => {
+    addItem("Milk");
+    const items = Array.from({ length: 11 }, (_, i) => `Item ${i}`);
+    expect(() => importData(JSON.stringify({ items, entries: [] }))).toThrow(/at most 10 items/);
+    expect(getItems()).toEqual(["Milk"]);
+  });
+
+  it("rejects an invalid month or negative price in an entry", () => {
+    addItem("Milk");
+    const badMonth = JSON.stringify({
+      items: ["Eggs"],
+      entries: [{ item: "Eggs", month: "Jan", price: 3 }],
+    });
+    expect(() => importData(badMonth)).toThrow(/invalid month/);
+
+    const badPrice = JSON.stringify({
+      items: ["Eggs"],
+      entries: [{ item: "Eggs", month: "2026-01", price: -3 }],
+    });
+    expect(() => importData(badPrice)).toThrow(/invalid price/);
+    expect(getItems()).toEqual(["Milk"]);
   });
 });
