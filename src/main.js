@@ -1,4 +1,5 @@
 import { addEntry, addItem, getEntries, getItems, removeItem } from "./store.js";
+import { attachChartInteractions, renderChartMarkup } from "./chartRender.js";
 
 function escapeHtml(value) {
   return String(value)
@@ -130,9 +131,14 @@ function render() {
       </header>
       <main class="layout">
         <section class="chart-panel receipt-card">
-          <h2>Your cart vs. official CPI</h2>
-          <p class="field-hint">${items.length} item${items.length === 1 ? "" : "s"} tracked,
-             ${entries.length} price${entries.length === 1 ? "" : "s"} logged.</p>
+          <h2>
+            Your cart vs. official CPI
+            <span class="chart-legend">
+              <span><span class="legend-swatch is-personal"></span>Your cart</span>
+              <span><span class="legend-swatch is-cpi"></span>CPI food-at-home</span>
+            </span>
+          </h2>
+          ${renderChartMarkup(items, entries)}
         </section>
         <aside class="rail">
           ${renderItemsPanel(items)}
@@ -144,6 +150,7 @@ function render() {
 
   bindItemForm();
   bindEntryForm();
+  attachChartInteractions(app);
 }
 
 function bindItemForm() {
