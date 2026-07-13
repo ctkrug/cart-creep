@@ -25,10 +25,11 @@ export default [
         it: "readonly",
         expect: "readonly",
         beforeEach: "readonly",
+        Event: "readonly",
       },
     },
   },
   {
-    ignores: ["dist/**", "node_modules/**"],
+    ignores: ["dist/**", "node_modules/**", "coverage/**"],
   },
 ];
