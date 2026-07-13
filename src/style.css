@@ -370,6 +370,7 @@ p {
 
 .chart-printer-head {
   fill: var(--text);
+  pointer-events: none;
   transition: cx 900ms ease-out, cy 900ms ease-out;
 }
 
