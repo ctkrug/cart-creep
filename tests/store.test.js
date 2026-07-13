@@ -64,6 +64,21 @@ describe("entries", () => {
     );
   });
 
+  it("rejects a month number outside 01-12", () => {
+    expect(() => addEntry({ item: "Milk", month: "2026-13", price: 4.2 })).toThrow(
+      /YYYY-MM/,
+    );
+    expect(() => addEntry({ item: "Milk", month: "2026-00", price: 4.2 })).toThrow(
+      /YYYY-MM/,
+    );
+  });
+
+  it("rejects an entry for an item that isn't tracked", () => {
+    expect(() => addEntry({ item: "Eggs", month: "2026-01", price: 4.2 })).toThrow(
+      /not in your cart/,
+    );
+  });
+
   it("rejects a negative price", () => {
     expect(() => addEntry({ item: "Milk", month: "2026-01", price: -1 })).toThrow(
       /non-negative/,
@@ -124,6 +139,16 @@ describe("exportData / importData", () => {
       entries: [{ item: "Eggs", month: "2026-01", price: -3 }],
     });
     expect(() => importData(badPrice)).toThrow(/invalid price/);
+    expect(getItems()).toEqual(["Milk"]);
+  });
+
+  it("rejects a month number outside 01-12", () => {
+    addItem("Milk");
+    const badMonth = JSON.stringify({
+      items: ["Eggs"],
+      entries: [{ item: "Eggs", month: "2026-13", price: 3 }],
+    });
+    expect(() => importData(badMonth)).toThrow(/invalid month/);
     expect(getItems()).toEqual(["Milk"]);
   });
 });
