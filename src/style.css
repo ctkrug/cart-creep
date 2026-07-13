@@ -395,7 +395,8 @@ p {
 }
 
 .chart-tooltip {
-  position: absolute;
+  position: fixed;
+  z-index: 10;
   pointer-events: none;
   background-color: var(--text);
   color: var(--surface-1);
