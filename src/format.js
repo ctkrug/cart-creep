@@ -20,5 +20,7 @@ export function formatPercent(value, { signed = true } = {}) {
 
 export function formatMonth(month) {
   const [year, monthNum] = month.split("-").map(Number);
-  return monthFormatter.format(new Date(year, monthNum - 1, 1));
+  const date = new Date(year, monthNum - 1, 1);
+  if (Number.isNaN(date.getTime())) return month;
+  return monthFormatter.format(date);
 }
