@@ -341,6 +341,7 @@ p {
 }
 
 .chart-canvas {
+  position: relative;
   flex: 1;
   min-height: 320px;
 }
@@ -356,6 +357,7 @@ p {
   stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
+  transition: stroke-dashoffset 900ms ease-out;
 }
 
 .chart-line.is-personal {
@@ -366,17 +368,9 @@ p {
   stroke: var(--accent-support);
 }
 
-.chart-line.is-printing {
-  animation: print-in 900ms ease-out forwards;
-}
-
-@keyframes print-in {
-  from {
-    stroke-dashoffset: var(--line-length, 1000);
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
+.chart-printer-head {
+  fill: var(--text);
+  transition: cx 900ms ease-out, cy 900ms ease-out;
 }
 
 .chart-point {
