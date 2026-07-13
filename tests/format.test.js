@@ -9,6 +9,10 @@ describe("formatCurrency", () => {
   it("formats zero", () => {
     expect(formatCurrency(0)).toBe("$0.00");
   });
+
+  it("adds thousands separators for large amounts", () => {
+    expect(formatCurrency(1234.5)).toBe("$1,234.50");
+  });
 });
 
 describe("formatPercent", () => {

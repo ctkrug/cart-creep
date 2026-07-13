@@ -20,6 +20,11 @@ describe("items", () => {
     expect(getItems()).toEqual(["Eggs"]);
   });
 
+  it("trims leading and trailing whitespace from the stored name", () => {
+    addItem("  Eggs  ");
+    expect(getItems()).toEqual(["Eggs"]);
+  });
+
   it("rejects a duplicate item, case-insensitively", () => {
     addItem("Eggs");
     expect(() => addItem("eggs")).toThrow(/already in your cart/);
