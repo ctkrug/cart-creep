@@ -1,5 +1,7 @@
 # Cart Creep
 
+[![CI](https://github.com/ctkrug/cart-creep/actions/workflows/ci.yml/badge.svg)](https://github.com/ctkrug/cart-creep/actions/workflows/ci.yml)
+
 Log what you paid for the same 10 groceries each month. Watch your own
 personal inflation line pull away from the official CPI number.
 
