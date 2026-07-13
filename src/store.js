@@ -76,3 +76,61 @@ export function addEntry({ item, month, price }) {
 export function clearAll() {
   writeAll({ items: [], entries: [] });
 }
+
+/** Serializes all items and entries as a pretty-printed JSON string. */
+export function exportData() {
+  return JSON.stringify(readAll(), null, 2);
+}
+
+/**
+ * Validates a previously exported JSON string end-to-end before writing
+ * anything, so a malformed or foreign file can never leave a partial write
+ * behind.
+ */
+export function importData(json) {
+  let parsed;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    throw new Error("Import file is not valid JSON");
+  }
+  if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.items) || !Array.isArray(parsed.entries)) {
+    throw new Error("Import file must contain \"items\" and \"entries\" arrays");
+  }
+
+  const items = [];
+  for (const item of parsed.items) {
+    if (typeof item !== "string" || !item.trim()) {
+      throw new Error("Import file contains an invalid item name");
+    }
+    const trimmed = item.trim();
+    if (items.some((existing) => existing.toLowerCase() === trimmed.toLowerCase())) {
+      throw new Error(`Import file has a duplicate item "${trimmed}"`);
+    }
+    items.push(trimmed);
+  }
+  if (items.length > 10) {
+    throw new Error("Cart Creep tracks at most 10 items");
+  }
+
+  const entries = [];
+  for (const entry of parsed.entries) {
+    if (!entry || typeof entry !== "object") {
+      throw new Error("Import file contains an invalid entry");
+    }
+    const { item, month, price } = entry;
+    if (typeof item !== "string" || !items.includes(item)) {
+      throw new Error(`Import file references an item not in its own item list: "${item}"`);
+    }
+    if (typeof month !== "string" || !/^\d{4}-\d{2}$/.test(month)) {
+      throw new Error(`Import file has an invalid month "${month}"`);
+    }
+    if (typeof price !== "number" || !Number.isFinite(price) || price < 0) {
+      throw new Error(`Import file has an invalid price for "${item}"`);
+    }
+    entries.push({ item, month, price });
+  }
+
+  writeAll({ items, entries });
+  return { items, entries };
+}
