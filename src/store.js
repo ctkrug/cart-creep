@@ -71,7 +71,7 @@ export function getEntries() {
 
 export function addEntry({ item, month, price }) {
   if (!item) throw new Error("Entry requires an item");
-  if (!/^\d{4}-\d{2}$/.test(month)) {
+  if (!MONTH_RE.test(month)) {
     throw new Error("Month must be in YYYY-MM format");
   }
   const numericPrice = Number(price);
@@ -80,6 +80,9 @@ export function addEntry({ item, month, price }) {
   }
 
   const data = readAll();
+  if (!data.items.includes(item)) {
+    throw new Error(`"${item}" is not in your cart`);
+  }
   const existingIndex = data.entries.findIndex(
     (entry) => entry.item === item && entry.month === month,
   );
@@ -142,7 +145,7 @@ export function importData(json) {
     if (typeof item !== "string" || !items.includes(item)) {
       throw new Error(`Import file references an item not in its own item list: "${item}"`);
     }
-    if (typeof month !== "string" || !/^\d{4}-\d{2}$/.test(month)) {
+    if (typeof month !== "string" || !MONTH_RE.test(month)) {
       throw new Error(`Import file has an invalid month "${month}"`);
     }
     if (typeof price !== "number" || !Number.isFinite(price) || price < 0) {
