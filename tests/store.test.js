@@ -119,6 +119,31 @@ describe("exportData / importData", () => {
     expect(getItems()).toEqual(["Milk"]);
   });
 
+  it("rejects a non-string or blank item name in the payload", () => {
+    addItem("Milk");
+    expect(() => importData(JSON.stringify({ items: [42], entries: [] }))).toThrow(
+      /invalid item name/,
+    );
+    expect(() => importData(JSON.stringify({ items: ["  "], entries: [] }))).toThrow(
+      /invalid item name/,
+    );
+    expect(getItems()).toEqual(["Milk"]);
+  });
+
+  it("rejects a payload with a duplicate item name, case-insensitively", () => {
+    addItem("Milk");
+    const bad = JSON.stringify({ items: ["Eggs", "eggs"], entries: [] });
+    expect(() => importData(bad)).toThrow(/duplicate item/);
+    expect(getItems()).toEqual(["Milk"]);
+  });
+
+  it("rejects a non-object entry in the payload", () => {
+    addItem("Milk");
+    const bad = JSON.stringify({ items: ["Eggs"], entries: ["not an entry"] });
+    expect(() => importData(bad)).toThrow(/invalid entry/);
+    expect(getItems()).toEqual(["Milk"]);
+  });
+
   it("rejects a payload over the 10-item cap", () => {
     addItem("Milk");
     const items = Array.from({ length: 11 }, (_, i) => `Item ${i}`);
