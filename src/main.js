@@ -1,4 +1,4 @@
-import { addItem, getEntries, getItems, removeItem } from "./store.js";
+import { addEntry, addItem, getEntries, getItems, removeItem } from "./store.js";
 
 function escapeHtml(value) {
   return String(value)
@@ -9,9 +9,16 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+function currentMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
 const state = {
   itemFormError: "",
   itemFormDraft: "",
+  entryFormError: "",
+  entryFormDraft: { item: "", month: currentMonth(), price: "" },
 };
 
 function renderItemsPanel(items) {
@@ -55,6 +62,59 @@ function renderItemsPanel(items) {
     </section>`;
 }
 
+function renderEntryPanel(items) {
+  const draft = state.entryFormDraft;
+  const options = items
+    .map(
+      (item) =>
+        `<option value="${escapeHtml(item)}" ${item === draft.item ? "selected" : ""}>${escapeHtml(item)}</option>`,
+    )
+    .join("");
+
+  return `
+    <section class="rail-block entry-block receipt-card" aria-label="Log a price">
+      <h2>Log a price</h2>
+      ${
+        items.length === 0
+          ? `<p class="field-hint">Add an item above before logging a price.</p>`
+          : `<form class="entry-form" id="entry-form" novalidate>
+        <div class="field">
+          <label class="field-label" for="entry-item-select">Item</label>
+          <select class="field-select" id="entry-item-select" name="item">${options}</select>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label class="field-label" for="entry-month-input">Month</label>
+            <input
+              class="field-input"
+              id="entry-month-input"
+              name="month"
+              type="month"
+              value="${escapeHtml(draft.month)}"
+            />
+          </div>
+          <div class="field">
+            <label class="field-label" for="entry-price-input">Price paid</label>
+            <input
+              class="field-input"
+              id="entry-price-input"
+              name="price"
+              type="number"
+              min="0"
+              step="0.01"
+              inputmode="decimal"
+              placeholder="0.00"
+              value="${escapeHtml(draft.price)}"
+            />
+          </div>
+        </div>
+        <p class="field-error" role="alert">${escapeHtml(state.entryFormError)}</p>
+        <button type="submit" class="btn btn-primary">Log price</button>
+      </form>`
+      }
+    </section>`;
+}
+
 function render() {
   const app = document.getElementById("app");
   const items = getItems();
@@ -76,12 +136,14 @@ function render() {
         </section>
         <aside class="rail">
           ${renderItemsPanel(items)}
+          ${renderEntryPanel(items)}
         </aside>
       </main>
     </div>
   `;
 
   bindItemForm();
+  bindEntryForm();
 }
 
 function bindItemForm() {
@@ -97,6 +159,32 @@ function bindItemForm() {
     } catch (error) {
       state.itemFormError = error.message;
       state.itemFormDraft = input.value;
+    }
+    render();
+  });
+}
+
+function bindEntryForm() {
+  const form = document.getElementById("entry-form");
+  if (!form) return;
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const item = document.getElementById("entry-item-select").value;
+    const month = document.getElementById("entry-month-input").value;
+    const price = document.getElementById("entry-price-input").value;
+    if (price.trim() === "") {
+      state.entryFormError = "Price is required";
+      state.entryFormDraft = { item, month, price };
+      render();
+      return;
+    }
+    try {
+      addEntry({ item, month, price });
+      state.entryFormError = "";
+      state.entryFormDraft = { item, month, price: "" };
+    } catch (error) {
+      state.entryFormError = error.message;
+      state.entryFormDraft = { item, month, price };
     }
     render();
   });
