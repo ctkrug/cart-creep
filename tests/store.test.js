@@ -104,6 +104,12 @@ describe("entries", () => {
       /non-negative/,
     );
   });
+
+  it("rejects a non-numeric price", () => {
+    expect(() => addEntry({ item: "Milk", month: "2026-01", price: "free" })).toThrow(
+      /non-negative/,
+    );
+  });
 });
 
 describe("exportData / importData", () => {

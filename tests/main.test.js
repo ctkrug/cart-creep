@@ -191,6 +191,18 @@ describe("logging a price", () => {
     expect(app().textContent).toContain("YYYY-MM");
   });
 
+  it("treats a non-numeric price as empty, same as the native number input would", async () => {
+    await withOneItem();
+    document.getElementById("entry-month-input").value = "2026-01";
+    // A real <input type="number"> sanitizes a non-numeric assignment to
+    // "" itself (which jsdom faithfully replicates), so this exercises the
+    // same "Price is required" path an empty field would.
+    document.getElementById("entry-price-input").value = "free";
+    submit("entry-form");
+
+    expect(app().textContent).toContain("Price is required");
+  });
+
   it("overwrites the price when the same item and month are logged again", async () => {
     await withOneItem();
     document.getElementById("entry-month-input").value = "2026-01";
