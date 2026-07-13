@@ -365,6 +365,26 @@ describe("export / import", () => {
     expect(app().textContent).toContain("Milk");
   });
 
+  it("rejects an import file over the 10-item cap and keeps existing data", async () => {
+    await loadApp();
+    document.getElementById("item-name-input").value = "Milk";
+    submit("item-form");
+
+    const items = Array.from({ length: 11 }, (_, i) => `Item ${i}`);
+    const payload = JSON.stringify({ items, entries: [] });
+    const file = new File([payload], "toomany.json", { type: "application/json" });
+    const input = document.getElementById("import-file-input");
+    Object.defineProperty(input, "files", { value: [file], configurable: true });
+    input.dispatchEvent(new Event("change"));
+
+    await waitFor(() => app().textContent.includes('Import "toomany.json"?'));
+    document.getElementById("confirm-import-btn").click();
+
+    expect(app().textContent).toContain("at most 10 items");
+    expect(app().textContent).toContain("(1/10)");
+    expect(app().textContent).toContain("Milk");
+  });
+
   it("cancels a pending import without changing any data", async () => {
     await loadApp();
     document.getElementById("item-name-input").value = "Milk";
