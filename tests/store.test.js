@@ -127,3 +127,61 @@ describe("exportData / importData", () => {
     expect(getItems()).toEqual(["Milk"]);
   });
 });
+
+describe("reading corrupted or hand-edited localStorage", () => {
+  const STORAGE_KEY = "cart-creep:v1";
+
+  it("recovers to an empty store when the raw value is not JSON", () => {
+    localStorage.setItem(STORAGE_KEY, "{not json");
+    expect(getItems()).toEqual([]);
+    expect(getEntries()).toEqual([]);
+  });
+
+  it("drops non-string or blank item names instead of crashing", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ items: ["Milk", 42, "   ", null], entries: [] }),
+    );
+    expect(getItems()).toEqual(["Milk"]);
+  });
+
+  it("drops entries with a month that isn't a valid YYYY-MM string", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        items: ["Milk"],
+        entries: [
+          { item: "Milk", month: "not-a-month", price: 4 },
+          { item: "Milk", month: "2026-01", price: 4 },
+        ],
+      }),
+    );
+    expect(getEntries()).toEqual([{ item: "Milk", month: "2026-01", price: 4 }]);
+  });
+
+  it("drops entries referencing an item that isn't in the item list", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        items: ["Milk"],
+        entries: [{ item: "Eggs", month: "2026-01", price: 3 }],
+      }),
+    );
+    expect(getEntries()).toEqual([]);
+  });
+
+  it("drops entries with a non-finite or negative price", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        items: ["Milk"],
+        entries: [
+          { item: "Milk", month: "2026-01", price: "free" },
+          { item: "Milk", month: "2026-02", price: -1 },
+          { item: "Milk", month: "2026-03", price: 4 },
+        ],
+      }),
+    );
+    expect(getEntries()).toEqual([{ item: "Milk", month: "2026-03", price: 4 }]);
+  });
+});
