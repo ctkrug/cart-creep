@@ -24,3 +24,34 @@ export function cartIndexSeries(entries) {
     changePercent: base === 0 ? 0 : ((total - base) / base) * 100,
   }));
 }
+
+/**
+ * Ranks tracked items by % price change from their first logged price to
+ * their most recent one. Items with fewer than two months logged can't show
+ * a trend, so they're reported separately rather than silently dropped.
+ */
+export function itemCreepBreakdown(entries) {
+  const byItem = new Map();
+  for (const entry of entries) {
+    if (!byItem.has(entry.item)) byItem.set(entry.item, []);
+    byItem.get(entry.item).push(entry);
+  }
+
+  const ranked = [];
+  const excluded = [];
+  for (const [item, logs] of byItem) {
+    const sorted = [...logs].sort((a, b) => a.month.localeCompare(b.month));
+    if (sorted.length < 2) {
+      excluded.push({ item, monthsLogged: sorted.length });
+      continue;
+    }
+    const firstPrice = sorted[0].price;
+    const lastPrice = sorted[sorted.length - 1].price;
+    const changePercent =
+      firstPrice === 0 ? 0 : ((lastPrice - firstPrice) / firstPrice) * 100;
+    ranked.push({ item, changePercent, firstPrice, lastPrice, monthsLogged: sorted.length });
+  }
+  ranked.sort((a, b) => b.changePercent - a.changePercent);
+
+  return { ranked, excluded };
+}
