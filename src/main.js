@@ -1,5 +1,7 @@
 import { addEntry, addItem, getEntries, getItems, removeItem } from "./store.js";
 import { attachChartInteractions, renderChartMarkup } from "./chartRender.js";
+import { itemCreepBreakdown } from "./cartIndex.js";
+import { formatCurrency, formatMonth, formatPercent } from "./format.js";
 
 function escapeHtml(value) {
   return String(value)
@@ -116,6 +118,83 @@ function renderEntryPanel(items) {
     </section>`;
 }
 
+function renderHistoryPanel(items, entries) {
+  const rows = items
+    .map((item) => {
+      const logs = entries
+        .filter((entry) => entry.item === item)
+        .sort((a, b) => a.month.localeCompare(b.month));
+      if (logs.length === 0) {
+        return `
+          <tr class="is-empty-row">
+            <td>${escapeHtml(item)}</td>
+            <td colspan="2">Not logged yet</td>
+          </tr>`;
+      }
+      return logs
+        .map(
+          (log, index) => `
+          <tr>
+            <td>${index === 0 ? escapeHtml(item) : ""}</td>
+            <td>${escapeHtml(formatMonth(log.month))}</td>
+            <td class="is-numeric">${escapeHtml(formatCurrency(log.price))}</td>
+          </tr>`,
+        )
+        .join("");
+    })
+    .join("");
+
+  return `
+    <section class="history-block receipt-card" aria-label="Price history">
+      <h2>Price history</h2>
+      ${
+        items.length === 0
+          ? `<p class="field-hint">Add an item to start a price history.</p>`
+          : `<table class="price-table">
+        <caption>Every logged price, by item and month</caption>
+        <thead>
+          <tr><th>Item</th><th>Month</th><th class="is-numeric">Price</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`
+      }
+    </section>`;
+}
+
+function renderBreakdownPanel(entries) {
+  const { ranked, excluded } = itemCreepBreakdown(entries);
+
+  const rankedRows = ranked
+    .map(
+      (row) => `
+      <li class="breakdown-row">
+        <span class="item-name">${escapeHtml(row.item)}</span>
+        <span class="creep-figure ${row.changePercent >= 0 ? "is-up" : "is-down"}">
+          ${escapeHtml(formatPercent(row.changePercent))}
+        </span>
+      </li>`,
+    )
+    .join("");
+
+  const excludedNote =
+    excluded.length > 0
+      ? `<p class="breakdown-excluded">
+          Needs a second month to show a trend: ${excluded.map((row) => escapeHtml(row.item)).join(", ")}.
+        </p>`
+      : "";
+
+  return `
+    <section class="breakdown-block receipt-card" aria-label="Per-item creep breakdown">
+      <h2>Creep breakdown</h2>
+      ${
+        ranked.length === 0
+          ? `<p class="field-hint">Log a second month for an item to rank it here.</p>`
+          : `<ul class="breakdown-list">${rankedRows}</ul>`
+      }
+      ${excludedNote}
+    </section>`;
+}
+
 function render() {
   const app = document.getElementById("app");
   const items = getItems();
@@ -145,6 +224,10 @@ function render() {
           ${renderEntryPanel(items)}
         </aside>
       </main>
+      <section class="detail-row">
+        ${renderHistoryPanel(items, entries)}
+        ${renderBreakdownPanel(entries)}
+      </section>
     </div>
   `;
 
