@@ -26,6 +26,8 @@ export default [
         expect: "readonly",
         beforeEach: "readonly",
         Event: "readonly",
+        File: "readonly",
+        setTimeout: "readonly",
       },
     },
   },
