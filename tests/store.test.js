@@ -93,6 +93,12 @@ describe("entries", () => {
     );
   });
 
+  it("rejects an entry with no item", () => {
+    expect(() => addEntry({ item: "", month: "2026-01", price: 4.2 })).toThrow(
+      /requires an item/,
+    );
+  });
+
   it("rejects a negative price", () => {
     expect(() => addEntry({ item: "Milk", month: "2026-01", price: -1 })).toThrow(
       /non-negative/,
@@ -204,6 +210,12 @@ describe("reading corrupted or hand-edited localStorage", () => {
 
   it("recovers to an empty store when the raw value is not JSON", () => {
     localStorage.setItem(STORAGE_KEY, "{not json");
+    expect(getItems()).toEqual([]);
+    expect(getEntries()).toEqual([]);
+  });
+
+  it("recovers to an empty store when items/entries aren't arrays", () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ items: "Milk", entries: {} }));
     expect(getItems()).toEqual([]);
     expect(getEntries()).toEqual([]);
   });
