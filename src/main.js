@@ -80,6 +80,8 @@ function renderEntryPanel(items) {
   return `
     <section class="rail-block entry-block receipt-card" aria-label="Log a price">
       <h2>Log a price</h2>
+      <p class="field-hint">Log every item each month for an accurate comparison —
+         a month with only some items priced will look cheaper than it was.</p>
       ${
         items.length === 0
           ? `<p class="field-hint">Add an item above before logging a price.</p>`
