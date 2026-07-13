@@ -4,6 +4,9 @@
   "private": true,
   "description": "Log what you paid for the same groceries each month and watch your personal inflation line pull away from the official CPI.",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
