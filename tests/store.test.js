@@ -216,6 +216,14 @@ describe("reading corrupted or hand-edited localStorage", () => {
     expect(getItems()).toEqual(["Milk"]);
   });
 
+  it("drops item names over the 60-character limit", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ items: ["Milk", "A".repeat(61)], entries: [] }),
+    );
+    expect(getItems()).toEqual(["Milk"]);
+  });
+
   it("drops entries with a month that isn't a valid YYYY-MM string", () => {
     localStorage.setItem(
       STORAGE_KEY,

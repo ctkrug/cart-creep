@@ -1,5 +1,6 @@
 const STORAGE_KEY = "cart-creep:v1";
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+const MAX_ITEM_NAME_LENGTH = 60;
 
 /**
  * Reads survive a hand-edited or foreign-written localStorage value: any
@@ -13,7 +14,9 @@ function readAll() {
   try {
     const parsed = JSON.parse(raw);
     const items = Array.isArray(parsed.items)
-      ? parsed.items.filter((item) => typeof item === "string" && item.trim())
+      ? parsed.items.filter(
+          (item) => typeof item === "string" && item.trim() && item.length <= MAX_ITEM_NAME_LENGTH,
+        )
       : [];
     const entries = Array.isArray(parsed.entries)
       ? parsed.entries.filter(
@@ -45,6 +48,9 @@ export function getItems() {
 export function addItem(name) {
   const trimmed = name.trim();
   if (!trimmed) throw new Error("Item name cannot be empty");
+  if (trimmed.length > MAX_ITEM_NAME_LENGTH) {
+    throw new Error(`Item name must be ${MAX_ITEM_NAME_LENGTH} characters or fewer`);
+  }
   const data = readAll();
   if (data.items.length >= 10) {
     throw new Error("Cart Creep tracks at most 10 items");
@@ -127,6 +133,9 @@ export function importData(json) {
       throw new Error("Import file contains an invalid item name");
     }
     const trimmed = item.trim();
+    if (trimmed.length > MAX_ITEM_NAME_LENGTH) {
+      throw new Error(`Import file has an item name over ${MAX_ITEM_NAME_LENGTH} characters`);
+    }
     if (items.some((existing) => existing.toLowerCase() === trimmed.toLowerCase())) {
       throw new Error(`Import file has a duplicate item "${trimmed}"`);
     }
