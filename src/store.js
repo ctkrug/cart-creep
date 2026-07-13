@@ -1,14 +1,34 @@
 const STORAGE_KEY = "cart-creep:v1";
+const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
+/**
+ * Reads survive a hand-edited or foreign-written localStorage value: any
+ * record that doesn't match the shape the rest of the app relies on is
+ * dropped here rather than crashing something downstream (e.g. formatMonth
+ * on a garbage month string).
+ */
 function readAll() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return { items: [], entries: [] };
   try {
     const parsed = JSON.parse(raw);
-    return {
-      items: Array.isArray(parsed.items) ? parsed.items : [],
-      entries: Array.isArray(parsed.entries) ? parsed.entries : [],
-    };
+    const items = Array.isArray(parsed.items)
+      ? parsed.items.filter((item) => typeof item === "string" && item.trim())
+      : [];
+    const entries = Array.isArray(parsed.entries)
+      ? parsed.entries.filter(
+          (entry) =>
+            entry &&
+            typeof entry === "object" &&
+            typeof entry.item === "string" &&
+            items.includes(entry.item) &&
+            typeof entry.month === "string" &&
+            MONTH_RE.test(entry.month) &&
+            Number.isFinite(entry.price) &&
+            entry.price >= 0,
+        )
+      : [];
+    return { items, entries };
   } catch {
     return { items: [], entries: [] };
   }
