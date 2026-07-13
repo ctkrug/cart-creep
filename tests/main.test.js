@@ -125,6 +125,19 @@ describe("adding and removing items", () => {
     expect(app().textContent).toContain("<img src=x onerror=");
   });
 
+  it("removes an item whose name contains quotes, round-tripping through the data attribute", async () => {
+    await loadApp();
+    document.getElementById("item-name-input").value = 'Milk "Whole" & Cream';
+    submit("item-form");
+
+    expect(app().textContent).toContain('Milk "Whole" & Cream');
+
+    document.querySelector("[data-remove-item]").click();
+
+    expect(app().textContent).not.toContain("Whole");
+    expect(app().textContent).toContain("(0/10)");
+  });
+
   it("does not add the same item twice from a rapid double submit", async () => {
     await loadApp();
     document.getElementById("item-name-input").value = "Milk";
