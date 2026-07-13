@@ -29,6 +29,20 @@ describe("items", () => {
     expect(() => addItem("   ")).toThrow(/cannot be empty/);
   });
 
+  it("rejects an item name longer than 60 characters", () => {
+    expect(() => addItem("A".repeat(61))).toThrow(/60 characters/);
+  });
+
+  it("accepts an item name at exactly the 60-character limit", () => {
+    addItem("A".repeat(60));
+    expect(getItems()).toEqual(["A".repeat(60)]);
+  });
+
+  it("accepts unicode and emoji in an item name", () => {
+    addItem("Café ☕ + 牛奶");
+    expect(getItems()).toEqual(["Café ☕ + 牛奶"]);
+  });
+
   it("caps the cart at 10 items", () => {
     for (let i = 0; i < 10; i++) addItem(`Item ${i}`);
     expect(() => addItem("Item 10")).toThrow(/at most 10 items/);
@@ -148,6 +162,13 @@ describe("exportData / importData", () => {
     addItem("Milk");
     const items = Array.from({ length: 11 }, (_, i) => `Item ${i}`);
     expect(() => importData(JSON.stringify({ items, entries: [] }))).toThrow(/at most 10 items/);
+    expect(getItems()).toEqual(["Milk"]);
+  });
+
+  it("rejects an item name over 60 characters in the payload", () => {
+    addItem("Milk");
+    const bad = JSON.stringify({ items: ["A".repeat(61)], entries: [] });
+    expect(() => importData(bad)).toThrow(/60 characters/);
     expect(getItems()).toEqual(["Milk"]);
   });
 
