@@ -13,6 +13,7 @@ const twoMonths = [
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("renderChartMarkup", () => {
@@ -118,5 +119,78 @@ describe("attachChartInteractions", () => {
 
     expect(() => attachChartInteractions(root, ["Milk"], twoMonths)).not.toThrow();
     expect(matchMediaSpy).toHaveBeenCalledWith("(prefers-reduced-motion: reduce)");
+  });
+
+  it("prints the line in from the printer head once the path length is measurable", async () => {
+    const root = mount(["Milk"], twoMonths);
+    const lines = root.querySelectorAll(".chart-line");
+    lines.forEach((line) => {
+      line.getTotalLength = () => 120;
+    });
+    const printerHead = root.querySelector(".chart-printer-head");
+    const finalCx = printerHead.getAttribute("cx");
+
+    attachChartInteractions(root, ["Milk"], twoMonths);
+
+    lines.forEach((line) => {
+      expect(line.style.strokeDasharray).toBe("120");
+      expect(line.style.strokeDashoffset).toBe("120");
+    });
+
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    lines.forEach((line) => {
+      expect(line.style.strokeDashoffset).toBe("0");
+    });
+    expect(printerHead.getAttribute("cx")).toBe(finalCx);
+  });
+
+  it("leaves a line undrawn when its length can't be measured", () => {
+    const root = mount(["Milk"], twoMonths);
+    const lines = root.querySelectorAll(".chart-line");
+    lines.forEach((line) => {
+      line.getTotalLength = () => {
+        throw new Error("not implemented");
+      };
+    });
+
+    expect(() => attachChartInteractions(root, ["Milk"], twoMonths)).not.toThrow();
+    lines.forEach((line) => {
+      expect(line.style.strokeDasharray).toBe("");
+    });
+  });
+
+  it("shows the tooltip on click, not just hover and focus", () => {
+    const root = mount(["Milk"], twoMonths);
+    attachChartInteractions(root, ["Milk"], twoMonths);
+
+    const tooltip = root.querySelector("#chart-tooltip");
+    const point = root.querySelector(".chart-point.is-personal");
+    point.dispatchEvent(new Event("click"));
+    expect(tooltip.hidden).toBe(false);
+  });
+
+  it("does not throw when the tooltip node is missing from the DOM", () => {
+    const root = mount(["Milk"], twoMonths);
+    root.querySelector("#chart-tooltip").remove();
+    expect(() => attachChartInteractions(root, ["Milk"], twoMonths)).not.toThrow();
+  });
+
+  it("bails out cleanly if a measured re-render drops back to a prompt state", () => {
+    const root = mount(["Milk"], twoMonths);
+    const canvas = root.querySelector(".chart-canvas");
+    vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({ width: 480, height: 240 });
+
+    expect(() => attachChartInteractions(root, ["Milk"], noEntries)).not.toThrow();
+    expect(root.querySelector("svg")).toBeNull();
+  });
+
+  it("skips CPI points for months outside the published CPI dataset", () => {
+    const html = renderChartMarkup(["Milk"], [
+      { item: "Milk", month: "1999-01", price: 4 },
+      { item: "Milk", month: "1999-02", price: 4.4 },
+    ]);
+    expect(html).not.toContain('class="chart-point is-cpi"');
+    expect(html).toContain('class="chart-point is-personal"');
   });
 });
