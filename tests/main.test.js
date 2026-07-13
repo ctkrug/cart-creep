@@ -251,6 +251,19 @@ describe("export / import", () => {
     expect(await blob.text()).toBe(exportData());
   });
 
+  it("does nothing when the user opens the file picker and cancels", async () => {
+    await loadApp();
+    document.getElementById("item-name-input").value = "Milk";
+    submit("item-form");
+
+    const input = document.getElementById("import-file-input");
+    Object.defineProperty(input, "files", { value: [], configurable: true });
+    expect(() => input.dispatchEvent(new Event("change"))).not.toThrow();
+
+    expect(app().textContent).toContain("Milk");
+    expect(document.querySelector('[role="alertdialog"]')).toBeNull();
+  });
+
   it("shows a confirm panel before an import, then applies it on confirm", async () => {
     await loadApp();
     document.getElementById("item-name-input").value = "Old item";

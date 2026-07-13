@@ -29,6 +29,16 @@ describe("cartIndexSeries", () => {
     expect(series[0]).toEqual({ month: "2026-01", changePercent: 0 });
     expect(series[1].changePercent).toBeCloseTo(10, 5);
   });
+
+  it("treats a zero base-month total as a 0% baseline instead of Infinity/NaN", () => {
+    const entries = [
+      { item: "Freebie", month: "2026-01", price: 0 },
+      { item: "Freebie", month: "2026-02", price: 2 },
+    ];
+    const series = cartIndexSeries(entries);
+    expect(series[0].changePercent).toBe(0);
+    expect(series[1].changePercent).toBe(0);
+  });
 });
 
 describe("itemCreepBreakdown", () => {
