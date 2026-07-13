@@ -163,6 +163,29 @@ describe("logging a price", () => {
   });
 });
 
+describe("resizing the window", () => {
+  it("re-measures and redraws the chart at its new container size", async () => {
+    await loadApp();
+    document.getElementById("item-name-input").value = "Milk";
+    submit("item-form");
+    document.getElementById("entry-month-input").value = "2026-01";
+    document.getElementById("entry-price-input").value = "4";
+    submit("entry-form");
+    document.getElementById("entry-month-input").value = "2026-02";
+    document.getElementById("entry-price-input").value = "4.4";
+    submit("entry-form");
+
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
+      width: 900,
+      height: 500,
+    });
+
+    window.dispatchEvent(new Event("resize"));
+
+    await waitFor(() => document.querySelector("svg")?.getAttribute("viewBox") === "0 0 900 500");
+  });
+});
+
 describe("export / import", () => {
   it("exports the current store as a downloaded JSON blob", async () => {
     await loadApp();
