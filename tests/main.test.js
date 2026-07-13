@@ -236,6 +236,45 @@ describe("logging a price", () => {
     expect(document.getElementById("entry-form")).toBeNull();
     expect(app().textContent).toContain("Add an item above before logging a price");
   });
+
+  it("carries a full multi-month journey through to the chart, history, and breakdown", async () => {
+    await loadApp();
+    document.getElementById("item-name-input").value = "Milk";
+    submit("item-form");
+    document.getElementById("item-name-input").value = "Eggs";
+    submit("item-form");
+
+    const months = [
+      ["2026-01", "4.00", "3.00"],
+      ["2026-02", "4.20", "3.30"],
+      ["2026-03", "4.50", "3.10"],
+    ];
+    for (const [month, milkPrice, eggsPrice] of months) {
+      document.getElementById("entry-item-select").value = "Milk";
+      document.getElementById("entry-month-input").value = month;
+      document.getElementById("entry-price-input").value = milkPrice;
+      submit("entry-form");
+
+      document.getElementById("entry-item-select").value = "Eggs";
+      document.getElementById("entry-month-input").value = month;
+      document.getElementById("entry-price-input").value = eggsPrice;
+      submit("entry-form");
+    }
+
+    const milkRows = [...document.querySelectorAll(".price-table tbody tr")].filter((row) =>
+      row.textContent.includes("$4."),
+    );
+    expect(milkRows).toHaveLength(3);
+
+    const svg = document.querySelector("svg");
+    expect(svg).not.toBeNull();
+    expect(document.querySelectorAll(".chart-point.is-personal")).toHaveLength(3);
+
+    const breakdownRows = [...document.querySelectorAll(".breakdown-row")];
+    expect(breakdownRows).toHaveLength(2);
+    expect(breakdownRows[0].textContent).toContain("Milk");
+    expect(breakdownRows[0].textContent).toContain("+12.5%");
+  });
 });
 
 describe("resizing the window", () => {
