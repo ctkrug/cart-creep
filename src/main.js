@@ -280,7 +280,7 @@ function render() {
   bindItemForm();
   bindEntryForm();
   bindDataActions();
-  attachChartInteractions(app);
+  attachChartInteractions(app, items, entries);
 }
 
 function bindItemForm() {

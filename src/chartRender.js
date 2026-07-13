@@ -27,7 +27,10 @@ function pointMarkup(point, series) {
  * (see attachChartInteractions) has somewhere to live without polluting the
  * unit-testable math.
  */
-export function renderChartMarkup(items, entries) {
+export function renderChartMarkup(items, entries, size = {}) {
+  const width = size.width || CHART_WIDTH;
+  const height = size.height || CHART_HEIGHT;
+
   if (items.length === 0) {
     return `
       <div class="chart-canvas state-block">
@@ -51,7 +54,7 @@ export function renderChartMarkup(items, entries) {
   }
 
   const series = buildComparisonSeries(entries);
-  const geometry = chartGeometry(series, { width: CHART_WIDTH, height: CHART_HEIGHT, padding: CHART_PADDING });
+  const geometry = chartGeometry(series, { width, height, padding: CHART_PADDING });
   const personalPath = pathFromPoints(geometry.personalPoints);
   const cpiPath = pathFromPoints(geometry.cpiPoints);
   const lastPersonal = geometry.personalPoints[geometry.personalPoints.length - 1];
@@ -59,7 +62,7 @@ export function renderChartMarkup(items, entries) {
   return `
     <div class="chart-canvas">
       <svg
-        viewBox="0 0 ${CHART_WIDTH} ${CHART_HEIGHT}"
+        viewBox="0 0 ${width} ${height}"
         role="img"
         aria-label="Chart comparing your cart's cumulative price change to the official CPI food-at-home index"
       >
@@ -67,7 +70,7 @@ export function renderChartMarkup(items, entries) {
           class="chart-axis-zero"
           x1="${CHART_PADDING}"
           y1="${geometry.zeroY.toFixed(2)}"
-          x2="${CHART_WIDTH - CHART_PADDING}"
+          x2="${width - CHART_PADDING}"
           y2="${geometry.zeroY.toFixed(2)}"
         />
         <path class="chart-line is-cpi" data-line="cpi" d="${cpiPath}"></path>
@@ -128,18 +131,23 @@ function animateLineDraw(svg) {
 }
 
 function attachTooltip(root, svg) {
-  const canvas = root.querySelector(".chart-canvas");
   const tooltip = root.querySelector("#chart-tooltip");
-  if (!canvas || !tooltip) return;
+  if (!tooltip) return;
 
   const show = (point) => {
     const series = point.dataset.series === "personal" ? "Your cart" : "CPI";
     tooltip.textContent = `${series} · ${formatMonth(point.dataset.month)} · ${formatPercent(Number(point.dataset.value))}`;
-    const canvasRect = canvas.getBoundingClientRect();
-    const pointRect = point.getBoundingClientRect();
-    tooltip.style.left = `${pointRect.left - canvasRect.left + pointRect.width / 2}px`;
-    tooltip.style.top = `${pointRect.top - canvasRect.top}px`;
     tooltip.hidden = false;
+
+    const pointRect = point.getBoundingClientRect();
+    const tooltipWidth = tooltip.offsetWidth;
+    const margin = 8;
+    const left = Math.min(
+      Math.max(pointRect.left + pointRect.width / 2, tooltipWidth / 2 + margin),
+      window.innerWidth - tooltipWidth / 2 - margin,
+    );
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${pointRect.top}px`;
   };
   const hide = () => {
     tooltip.hidden = true;
@@ -154,8 +162,25 @@ function attachTooltip(root, svg) {
   });
 }
 
-/** Wires the "prints in" line-draw animation and the point tooltip. DOM-only — not covered by the pure geometry unit tests. */
-export function attachChartInteractions(root) {
+/**
+ * Wires the "prints in" line-draw animation and the point tooltip. DOM-only
+ * — not covered by the pure geometry unit tests.
+ *
+ * Re-renders the chart to match the canvas's actual measured size first: a
+ * fixed viewBox left letterboxed dead space (or, with preserveAspectRatio
+ * "none", squashed circle markers) whenever the container's aspect ratio
+ * didn't match the default 640x340, which it rarely does once the hero grid
+ * and responsive breakpoints are involved.
+ */
+export function attachChartInteractions(root, items, entries) {
+  const canvas = root.querySelector(".chart-canvas");
+  if (!canvas || !canvas.querySelector("svg")) return;
+
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width > 0 && rect.height > 0) {
+    canvas.outerHTML = renderChartMarkup(items, entries, { width: rect.width, height: rect.height });
+  }
+
   const svg = root.querySelector(".chart-canvas svg");
   if (!svg) return;
 
