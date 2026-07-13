@@ -26,25 +26,33 @@ Everything runs in the browser. Nothing you type ever leaves your device.
    the same chart — same start point, same scale — so you can see exactly
    how much steeper (or flatter) your line is.
 
-## Planned features
+## Features
 
-- Item-level price log with monthly entries, stored entirely in
-  `localStorage` — no accounts, no server, no sync.
-- A line chart comparing your indexed cart cost against real BLS CPI data,
-  baked into the app as a reference dataset.
-- Per-item breakdown so you can see which items are driving your creep.
-- Import/export of your data as JSON, since it's the only copy that exists.
+- Track up to 10 grocery items, with inline validation on the add-item and
+  log-price forms — no browser `alert()`s.
+- The comparison chart: your personal cost-of-cart index against the real
+  BLS CPI-U food-at-home series, sharing one axis, "printing in" on first
+  render. Hover or tap a point for its exact month/value.
+- Per-item price history table and a creep breakdown ranking which items
+  are driving your personal inflation, highest first.
+- Export your data as JSON, or import a previous export (with a confirm
+  step before it overwrites anything).
+- Clear-all with a type-to-confirm safeguard.
+- Everything persists in `localStorage` — no accounts, no server, no sync.
 
 ## Stack
 
 Vanilla JavaScript, `localStorage` for persistence, [Vite](https://vitejs.dev)
 for the dev server and static build, [Vitest](https://vitest.dev) for tests.
-No backend, no framework, no build step required to read the source.
+No backend, no framework, no build step required to read the source. See
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how the modules fit
+together.
 
 ## Status
 
-Early scaffold — see [`docs/VISION.md`](docs/VISION.md) for the full design
-and [`docs/BACKLOG.md`](docs/BACKLOG.md) for the build plan.
+Core v1 feature set is built — see [`docs/VISION.md`](docs/VISION.md) for
+the full design and [`docs/BACKLOG.md`](docs/BACKLOG.md) for the story
+list.
 
 ## Development
 
