@@ -232,7 +232,7 @@ function renderDataPanel() {
   return "";
 }
 
-function render() {
+export function render() {
   const app = document.getElementById("app");
   const items = getItems();
   const entries = getEntries();

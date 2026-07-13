@@ -1,10 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { exportData } from "../src/store.js";
 
-async function loadApp() {
+// Importing main.js runs its one-time side effects (the initial render and
+// the document/window listener registrations) exactly once for this whole
+// file. Re-importing per test via vi.resetModules() would register a fresh
+// set of listeners on every test without ever removing the old ones, since
+// main.js has no dispose hook — window/document persist across tests in one
+// file, so those listeners pile up and all fire on the next dispatched
+// event, racing each other's renders against the current test's assertions.
+// #app has to exist before that first import-time render() runs, so this
+// uses a dynamic import after setting up the DOM rather than a static one.
+document.body.innerHTML = '<div id="app"></div>';
+const { render } = await import("../src/main.js");
+
+function loadApp() {
   document.body.innerHTML = '<div id="app"></div>';
-  vi.resetModules();
-  await import("../src/main.js");
+  render();
 }
 
 async function waitFor(check, timeout = 1000) {
@@ -102,6 +113,45 @@ describe("adding and removing items", () => {
     expect(app().textContent).not.toContain("Milk");
     expect(app().textContent).toContain("(0/10)");
     expect(app().textContent).toContain("Your ledger is empty");
+  });
+
+  it("neutralizes an item name that looks like markup instead of rendering it", async () => {
+    await loadApp();
+    document.getElementById("item-name-input").value = '<img src=x onerror="window.__pwned=true">';
+    submit("item-form");
+
+    expect(window.__pwned).toBeUndefined();
+    expect(document.querySelectorAll("img")).toHaveLength(0);
+    expect(app().textContent).toContain("<img src=x onerror=");
+  });
+
+  it("does not add the same item twice from a rapid double submit", async () => {
+    await loadApp();
+    document.getElementById("item-name-input").value = "Milk";
+    submit("item-form");
+    document.getElementById("item-name-input").value = "Milk";
+    submit("item-form");
+
+    expect(app().textContent).toContain("(1/10)");
+    expect(app().textContent).toContain("already in your cart");
+  });
+
+  it("keeps the entry form usable after removing the item it had selected", async () => {
+    await loadApp();
+    document.getElementById("item-name-input").value = "Milk";
+    submit("item-form");
+    document.getElementById("item-name-input").value = "Eggs";
+    submit("item-form");
+
+    document.getElementById("entry-item-select").value = "Milk";
+    document.querySelector('[data-remove-item="Milk"]').click();
+
+    document.getElementById("entry-month-input").value = "2026-01";
+    document.getElementById("entry-price-input").value = "3.50";
+    submit("entry-form");
+
+    expect(app().textContent).toContain("$3.50");
+    expect(document.getElementById("entry-item-select").value).toBe("Eggs");
   });
 });
 
@@ -295,13 +345,13 @@ describe("clear all data", () => {
 });
 
 describe("recovering from corrupted localStorage", () => {
-  it("renders the empty state instead of crashing on unparsable JSON", async () => {
+  it("renders the empty state instead of crashing on unparsable JSON", () => {
     localStorage.setItem("cart-creep:v1", "{not json");
-    await expect(loadApp()).resolves.not.toThrow();
+    expect(() => loadApp()).not.toThrow();
     expect(app().textContent).toContain("Your ledger is empty");
   });
 
-  it("renders cleanly when a stored entry has a garbage month", async () => {
+  it("renders cleanly when a stored entry has a garbage month", () => {
     localStorage.setItem(
       "cart-creep:v1",
       JSON.stringify({
@@ -309,7 +359,7 @@ describe("recovering from corrupted localStorage", () => {
         entries: [{ item: "Milk", month: "garbage", price: 4 }],
       }),
     );
-    await expect(loadApp()).resolves.not.toThrow();
+    expect(() => loadApp()).not.toThrow();
     expect(app().textContent).toContain("Milk");
     expect(app().textContent).toContain("Not logged yet");
   });
