@@ -401,4 +401,10 @@ document.addEventListener("click", (event) => {
   render();
 });
 
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(render, 150);
+});
+
 render();
