@@ -40,6 +40,12 @@ no logic that affects stored data.
   shape (`{ items, entries }`) is defined in exactly one place. Validates at
   the boundary: `addItem`/`addEntry`/`importData` throw on bad input rather
   than writing it. `exportData`/`importData` are the JSON backup path.
+  `readAll()` also sanitizes on the way back out — a hand-edited or
+  foreign-written localStorage value can have the right shape (`items`/
+  `entries` arrays) but garbage inside it, so any item/entry that doesn't
+  match the same rules `addItem`/`addEntry` enforce (non-empty string item,
+  `YYYY-MM` month in 01–12, finite non-negative price, entry references a
+  tracked item) is dropped rather than reaching the render pipeline.
 - **`src/cpi.js`** — the reference dataset (BLS CPI-U food-at-home,
   `CUUR0000SAF11`, hardcoded so the app works offline) plus
   `cpiChangePercent(base, target)`, cumulative % change between two months.
@@ -76,13 +82,26 @@ chart. This is intentional (tested, and referenced by the wow-moment
 acceptance criteria in `docs/BACKLOG.md`), not a bug — but it's the reason
 the entry form hints "log every item each month."
 
+## Tests
+
+`tests/` mirrors `src/` one-to-one. `cartIndex`, `chart`, `cpi`, `store`,
+and `format` are pure-logic unit tests. `chartRender.test.js` and
+`main.test.js` drive real jsdom DOM: `main.test.js` gets a fresh module
+instance per test via `vi.resetModules()` + a dynamic `import()` (main.js
+renders itself and binds a document-level listener as an import side
+effect, so each test needs a clean instance against a clean `localStorage`
+and `#app`).
+
 ## Run it
 
 ```sh
 npm install
-npm run dev      # local dev server
-npm test         # vitest, jsdom environment
-npm run lint     # eslint flat config
-npm run build    # static build to dist/ — base-path-relative, deployable
-                  # to a subpath (apps.charliekrug.com/cart-creep/)
+npm run dev            # local dev server
+npm test                # vitest, jsdom environment
+npm run test:coverage   # vitest with v8 coverage — coverage.all: true means
+                         # an untested file shows as 0% instead of being
+                         # silently omitted from the report
+npm run lint            # eslint flat config
+npm run build           # static build to dist/ — base-path-relative,
+                         # deployable to a subpath (apps.charliekrug.com/cart-creep/)
 ```
