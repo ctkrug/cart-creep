@@ -10,6 +10,7 @@ export default [
         window: "readonly",
         document: "readonly",
         localStorage: "readonly",
+        requestAnimationFrame: "readonly",
       },
     },
   },
