@@ -35,6 +35,6 @@ export default [
     },
   },
   {
-    ignores: ["dist/**", "node_modules/**", "coverage/**"],
+    ignores: ["dist/**", "site/**", "node_modules/**", "coverage/**"],
   },
 ];
