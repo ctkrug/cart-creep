@@ -107,6 +107,6 @@ npm run test:coverage   # vitest with v8 coverage — coverage.all: true means
                          # an untested file shows as 0% instead of being
                          # silently omitted from the report
 npm run lint            # eslint flat config
-npm run build           # static build to dist/ — base-path-relative,
+npm run build           # static build to site/ — base-path-relative,
                          # deployable to a subpath (apps.charliekrug.com/cart-creep/)
 ```
