@@ -25,6 +25,75 @@
   </head>
   <body>
     <div id="app"></div>
+
+    <section class="marketing" aria-label="About Cart Creep">
+      <div class="marketing-inner">
+        <h2>How to tell if you're really paying more for groceries</h2>
+        <p>
+          The headline inflation figure is an average across thousands of products
+          and every household in the country. Your cart is not average. Cart Creep
+          is a grocery inflation calculator built around the specific items you
+          actually buy: log what you paid for the same short list each month and it
+          works out your own inflation rate, then draws it right next to the
+          government's food-at-home CPI. When your line climbs faster than the
+          official one, you can see how much faster, and which items are driving it.
+        </p>
+
+        <h2 class="faq-heading">Questions people ask</h2>
+        <dl class="faq">
+          <div class="faq-item">
+            <dt>What is a grocery inflation calculator?</dt>
+            <dd>
+              It turns the prices you pay into a rate of change. Cart Creep sums your
+              tracked items each month, indexes that total to your first month, and
+              reports how far it has moved since. That is your grocery inflation rate,
+              measured from real receipts instead of a national average.
+            </dd>
+          </div>
+          <div class="faq-item">
+            <dt>Am I paying more for groceries than last year?</dt>
+            <dd>
+              Log the same items across the months you want to compare and Cart Creep
+              answers it directly. The chart plots your cumulative change from your
+              starting month, so a point twelve months out shows exactly how much more
+              (or less) the same cart costs than it did a year ago.
+            </dd>
+          </div>
+          <div class="faq-item">
+            <dt>How is a personal inflation rate different from the CPI?</dt>
+            <dd>
+              The CPI food-at-home index tracks a fixed national basket. Your personal
+              inflation rate tracks your basket: if you buy a lot of coffee and eggs and
+              those jumped, your rate runs hotter than the CPI in the same month. Cart
+              Creep plots both on one axis from the same base month so the gap is easy to
+              read.
+            </dd>
+          </div>
+          <div class="faq-item">
+            <dt>How much data do I need before it means anything?</dt>
+            <dd>
+              Two months of prices for at least one item is enough to draw your first
+              trend line. Log every item each month for the most accurate comparison; a
+              month with only some items priced will look cheaper than it really was.
+            </dd>
+          </div>
+          <div class="faq-item">
+            <dt>Is my data private?</dt>
+            <dd>
+              Yes. Everything stays in your browser's localStorage. There is no account,
+              no server, and nothing you type is ever sent anywhere. Export your history
+              to a JSON file whenever you want a backup, and import it back later.
+            </dd>
+          </div>
+        </dl>
+
+        <footer class="site-footer">
+          <a href="https://github.com/ctkrug/cart-creep" rel="noopener">View the source on GitHub</a>
+          <a href="https://apps.charliekrug.com" rel="noopener">More by Charlie Krug → apps.charliekrug.com</a>
+        </footer>
+      </div>
+    </section>
+
     <script type="module" src="./src/main.js"></script>
   </body>
 </html>

@@ -608,6 +608,80 @@ p {
   margin-bottom: 0;
 }
 
+/* Below-the-fold marketing + FAQ + footer (static, outside #app) */
+
+.marketing {
+  border-top: 1px dashed var(--text-muted);
+}
+
+.marketing-inner {
+  max-width: 72ch;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-3);
+}
+
+.marketing h2 {
+  font-size: 1.375rem;
+  margin-bottom: var(--space-3);
+}
+
+.marketing p {
+  color: var(--text-muted);
+  max-width: 68ch;
+}
+
+.faq-heading {
+  margin-top: var(--space-6);
+}
+
+.faq {
+  margin: var(--space-3) 0 0;
+}
+
+.faq-item {
+  padding: var(--space-3) 0;
+  border-bottom: 1px dashed var(--surface-2);
+}
+
+.faq-item dt {
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  color: var(--text);
+  margin-bottom: var(--space-1);
+}
+
+.faq-item dd {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.site-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.site-footer a {
+  color: var(--accent-support);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--motion-fast), color var(--motion-fast);
+}
+
+.site-footer a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.site-footer a:focus-visible {
+  outline: 2px solid var(--accent-support);
+  outline-offset: 2px;
+}
+
 @media (max-width: 390px) {
   .page {
     padding-inline: var(--space-2);
